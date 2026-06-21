@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Walking Water — Capillary Action Science Fair Project</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#FAF6EC;
+  --paper-dim:#F2ECDD;
+  --ink:#1B3A4B;
+  --ink-soft:#3D3128;
+  --blue:#2E86AB;
+  --blue-pale:#E0EFF5;
+  --amber:#C17817;
+  --amber-pale:#FBEEDA;
+  --green:#5B8C3A;
+  --green-pale:#E8F1E0;
+  --rule:#D9CFC0;
+  --rule-strong:#C4B8A4;
+  --shadow: 0 4px 14px rgba(27,58,75,0.08);
+  --shadow-lg: 0 12px 32px rgba(27,58,75,0.14);
+  --radius: 14px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:
+    radial-gradient(ellipse at top left, #FFFDF8 0%, var(--paper) 55%),
+    var(--paper);
+  background-attachment:fixed;
+  color:var(--ink-soft);
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:"";
+  position:fixed; inset:0;
+  pointer-events:none;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(217,207,192,0.35) 28px);
+  opacity:0.5;
+  z-index:0;
+}
+.font-hand{font-family:'Caveat',cursive;}
+.mono{font-family:'JetBrains Mono',monospace;}
+
+a{color:var(--blue);}
+
+/* ===== Layout shell ===== */
+.app{
+  position:relative;
+  z-index:1;
+  max-width:1180px;
+  margin:0 auto;
+  padding:0 24px 100px;
+}
+
+/* ===== Header ===== */
+.site-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:28px 4px 18px;
+  gap:16px;
+  flex-wrap:wrap;
+}
+.brand{
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+.brand-mark{width:46px;height:56px;flex-shrink:0;}
+.brand-text h1{
+  font-family:'Caveat',cursive;
+  font-weight:700;
+  font-size:2.1rem;
+  color:var(--ink);
+  margin:0;
+  line-height:1;
+}
+.brand-text p{
+  margin:2px 0 0;
+  font-size:0.78rem;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--blue);
+  font-weight:600;
+}
+.header-actions{display:flex; gap:10px; align-items:center;}
+.icon-btn{
+  border:1.5px solid var(--rule-strong);
+  background:#fff;
+  color:var(--ink-soft);
+  border-radius:10px;
+  padding:9px 14px;
+  font-size:0.82rem;
+  font-weight:600;
+  font-family:inherit;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  transition:all .15s ease;
+}
+.icon-btn:hover{border-color:var(--blue); color:var(--blue); transform:translateY(-1px); box-shadow:var(--shadow);}
+.icon-btn svg{width:15px;height:15px;}
+
+/* ===== Progress rail ===== */
+.rail-wrap{
+  position:sticky; top:0; z-index:20;
+  background:linear-gradient(var(--paper) 78%, transparent);
+  padding:8px 0 18px;
+  margin-bottom:8px;
+}
+.rail{
+  display:flex;
+  background:#fff;
+  border:1.5px solid var(--rule-strong);
+  border-radius:16px;
+  box-shadow:var(--shadow);
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+.rail::-webkit-scrollbar{display:none;}
+.rail-step{
+  flex:1 1 0;
+  min-width:108px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  padding:13px 6px 11px;
+  cursor:pointer;
+  border:none;
+  background:transparent;
+  font-family:inherit;
+  position:relative;
+  border-right:1px solid var(--rule);
+  transition:background .15s ease;
+}
+.rail-step:last-child{border-right:none;}
+.rail-step:hover{background:var(--paper-dim);}
+.rail-step .dot{
+  width:28px;height:28px;border-radius:50%;
+  background:var(--paper-dim);
+  border:2px solid var(--rule-strong);
+  display:flex; align-items:center; justify-content:center;
+  font-size:0.78rem; font-weight:700; color:var(--ink-soft);
+  transition:all .2s ease;
+}
+.rail-step .label{
+  font-size:0.66rem;
+  font-weight:600;
+  letter-spacing:0.02em;
+  color:var(--ink-soft);
+  text-align:center;
+  opacity:0.75;
+}
+.rail-step.active .dot{background:var(--blue); border-color:var(--blue); color:#fff; box-shadow:0 0 0 4px var(--blue-pale);}
+.rail-step.active .label{opacity:1; color:var(--blue);}
+.rail-step.done .dot{background:var(--green); border-color:var(--green); color:#fff;}
+.rail-step.done .dot::after{content:"✓"; }
+.rail-step.done .dot span{display:none;}
+
+/* ===== Page card ===== */
+.page{
+  display:none;
+  animation: fadeUp .4s ease both;
+}
+.page.active{display:block;}
+@keyframes fadeUp{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+
+.card{
+  background:#fff;
+  border:1.5px solid var(--rule-strong);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:34px 38px;
+  margin-bottom:22px;
+  position:relative;
+}
+.card.pinned::before{
+  content:"";
+  position:absolute; top:-10px; left:32px;
+  width:18px; height:18px; border-radius:50%;
+  background:var(--amber);
+  box-shadow:0 3px 6px rgba(0,0,0,0.2), inset -2px -2px 3px rgba(0,0,0,0.15);
+}
+.eyebrow{
+  font-family:'Caveat',cursive;
+  font-size:1.5rem;
+  font-weight:600;
+  color:var(--amber);
+  margin:0 0 2px;
+}
+h2.section-title{
+  font-size:1.7rem;
+  font-weight:800;
+  color:var(--ink);
+  margin:0 0 14px;
+  letter-spacing:-0.01em;
+}
+h3{font-size:1.18rem; font-weight:700; color:var(--blue); margin:26px 0 10px;}
+p{margin:0 0 14px;}
+.lede{font-size:1.04rem; color:var(--ink-soft);}
+
+.callout{
+  border-radius:12px;
+  padding:18px 20px;
+  margin:18px 0;
+  border-left:5px solid var(--blue);
+  background:var(--blue-pale);
+}
+.callout.warm{border-left-color:var(--amber); background:var(--amber-pale);}
+.callout.green{border-left-color:var(--green); background:var(--green-pale);}
+.callout strong.title{display:block; color:var(--ink); font-size:0.95rem; margin-bottom:6px;}
+.callout p:last-child{margin-bottom:0;}
+.callout ul{margin:6px 0 0; padding-left:20px;}
+.callout li{margin-bottom:5px;}
+
+.vocab-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px 22px; margin-top:8px;}
+@media (max-width:640px){.vocab-grid{grid-template-columns:1fr;}}
+.vocab-item{font-size:0.92rem;}
+.vocab-item b{color:var(--ink);}
+
+.nav-buttons{
+  display:flex; justify-content:space-between; align-items:center;
+  margin-top:8px;
+}
+.btn{
+  font-family:inherit;
+  font-weight:700;
+  font-size:0.92rem;
+  padding:12px 22px;
+  border-radius:11px;
+  border:none;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  transition:all .15s ease;
+}
+.btn-primary{background:var(--ink); color:#fff;}
+.btn-primary:hover{background:var(--blue); transform:translateY(-1px); box-shadow:var(--shadow-lg);}
+.btn-ghost{background:transparent; color:var(--ink-soft); border:1.5px solid var(--rule-strong);}
+.btn-ghost:hover{border-color:var(--ink-soft); transform:translateY(-1px);}
+.btn:disabled{opacity:0.4; cursor:not-allowed; transform:none !important;}
+.btn svg{width:16px;height:16px;}
+
+/* ===== Inputs ===== */
+label.field-label{
+  display:block; font-weight:700; font-size:0.88rem; color:var(--ink); margin:18px 0 7px;
+}
+label.field-label .hint{font-weight:500; color:var(--ink-soft); opacity:0.7; font-size:0.82rem; display:block; margin-top:2px;}
+textarea, input[type=text], select{
+  width:100%;
+  font-family:inherit;
+  font-size:0.96rem;
+  color:var(--ink-soft);
+  border:1.5px solid var(--rule-strong);
+  border-radius:10px;
+  padding:12px 14px;
+  background:var(--paper-dim);
+  resize:vertical;
+  transition:border-color .15s ease, background .15s ease;
+}
+textarea:focus, input[type=text]:focus, select:focus{
+  outline:none; border-color:var(--blue); background:#fff;
+}
+textarea{min-height:84px; line-height:1.5;}
+.fill-blank{
+  display:inline-block;
+  min-width:160px;
+  border:none;
+  border-bottom:2px solid var(--blue);
+  background:transparent;
+  font-family:inherit;
+  font-size:0.96rem;
+  padding:2px 4px;
+  color:var(--ink);
+}
+.fill-blank:focus{outline:none; background:var(--blue-pale);}
+.hyp-sentence{
+  font-size:1.05rem;
+  line-height:2.4;
+  background:var(--amber-pale);
+  border-radius:12px;
+  padding:18px 20px;
+  margin-top:10px;
+}
+
+/* ===== Variables table ===== */
+.var-table{width:100%; border-collapse:collapse; margin-top:10px; font-size:0.9rem;}
+.var-table th{background:var(--ink); color:#fff; text-align:left; padding:10px 12px; font-size:0.78rem; text-transform:uppercase; letter-spacing:0.04em;}
+.var-table td{padding:10px 12px; border-bottom:1px solid var(--rule); vertical-align:top;}
+.var-table tr:nth-child(even) td{background:var(--paper-dim);}
+.var-table input{padding:8px 10px; font-size:0.9rem;}
+
+/* ===== Materials checklist ===== */
+.checklist{list-style:none; margin:14px 0; padding:0; display:grid; grid-template-columns:1fr 1fr; gap:8px 18px;}
+@media (max-width:640px){.checklist{grid-template-columns:1fr;}}
+.checklist li{display:flex; align-items:flex-start; gap:10px; font-size:0.93rem;}
+.checklist input[type=checkbox]{margin-top:3px; width:17px; height:17px; accent-color:var(--blue); flex-shrink:0;}
+
+/* ===== Step blocks ===== */
+.step-block{
+  border:1.5px solid var(--rule); border-radius:12px; padding:20px 22px; margin:18px 0; background:var(--paper-dim);
+}
+.step-block h4{
+  margin:0 0 12px; color:var(--amber); font-size:1.02rem; font-weight:800;
+  display:flex; align-items:center; gap:8px;
+}
+.step-block ol{margin:0; padding-left:20px;}
+.step-block li{margin-bottom:8px; font-size:0.94rem;}
+
+.photo-prompt{
+  display:flex; gap:14px; align-items:flex-start;
+  background:var(--amber-pale); border:1.5px dashed var(--amber);
+  border-radius:12px; padding:16px 18px; margin-top:14px;
+}
+.photo-prompt .cam{font-size:1.4rem; flex-shrink:0;}
+.photo-prompt .pp-text{flex:1; font-size:0.9rem;}
+.photo-prompt .pp-text b{color:var(--amber); display:block; margin-bottom:3px;}
+.photo-upload-row{display:flex; align-items:center; gap:10px; margin-top:10px; flex-wrap:wrap;}
+.photo-upload-btn{
+  font-family:inherit; font-size:0.82rem; font-weight:700; color:#fff; background:var(--amber);
+  border:none; border-radius:8px; padding:8px 14px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;
+}
+.photo-upload-btn:hover{background:#a8690f;}
+.photo-thumbs{display:flex; gap:8px; flex-wrap:wrap;}
+.photo-thumb{position:relative; width:64px;height:64px; border-radius:8px; overflow:hidden; border:2px solid var(--amber); flex-shrink:0;}
+.photo-thumb img{width:100%;height:100%;object-fit:cover; display:block;}
+.photo-thumb button{
+  position:absolute; top:1px; right:1px; width:18px;height:18px; border-radius:50%;
+  background:rgba(0,0,0,0.6); color:#fff; border:none; font-size:11px; line-height:1; cursor:pointer; padding:0;
+}
+
+/* ===== Timer widget ===== */
+.timer-widget{
+  display:flex; gap:24px; align-items:center; flex-wrap:wrap;
+  background:linear-gradient(135deg, var(--blue-pale), #fff);
+  border:1.5px solid var(--blue); border-radius:14px; padding:20px 24px; margin:16px 0;
+}
+.timer-visual{width:90px; height:120px; flex-shrink:0;}
+.timer-info{flex:1; min-width:200px;}
+.timer-info .t-label{font-weight:700; color:var(--ink); font-size:0.98rem; margin-bottom:4px;}
+.timer-clock{font-family:'JetBrains Mono',monospace; font-size:2.1rem; font-weight:700; color:var(--blue); letter-spacing:0.02em;}
+.timer-controls{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+.timer-controls .btn{padding:8px 16px; font-size:0.82rem;}
+.timer-status{font-size:0.82rem; font-weight:600; margin-top:6px;}
+.timer-status.running{color:var(--blue);}
+.timer-status.done{color:var(--green);}
+
+/* ===== Checkpoint cards ===== */
+.checkpoint-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:14px; margin-top:16px;}
+.checkpoint-card{
+  border:1.5px solid var(--rule-strong); border-radius:12px; padding:16px 18px; background:#fff;
+  transition:border-color .15s ease;
+}
+.checkpoint-card.logged{border-color:var(--green); background:var(--green-pale);}
+.checkpoint-card .cp-time{font-weight:800; color:var(--ink); font-size:0.95rem; display:flex; align-items:center; justify-content:space-between;}
+.checkpoint-card .cp-badge{font-size:0.68rem; font-weight:700; padding:2px 8px; border-radius:20px; background:var(--rule); color:var(--ink-soft);}
+.checkpoint-card.logged .cp-badge{background:var(--green); color:#fff;}
+.checkpoint-card .cp-fields{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;}
+.checkpoint-card .cp-fields input{padding:8px 10px; font-size:0.85rem;}
+.checkpoint-card .cp-obs{margin-top:8px;}
+.checkpoint-card .cp-obs textarea{min-height:54px; font-size:0.85rem; padding:8px 10px;}
+.cp-field-label{font-size:0.7rem; font-weight:700; color:var(--ink-soft); opacity:0.7; text-transform:uppercase; margin-bottom:3px; display:block;}
+
+/* ===== Data table review ===== */
+.data-table{width:100%; border-collapse:collapse; margin-top:14px; font-size:0.86rem;}
+.data-table th{background:var(--ink); color:#fff; padding:9px 10px; text-align:left; font-size:0.74rem; text-transform:uppercase; letter-spacing:0.03em;}
+.data-table td{padding:9px 10px; border-bottom:1px solid var(--rule);}
+.data-table tr:nth-child(even) td{background:var(--paper-dim);}
+
+/* ===== Chart ===== */
+.chart-wrap{background:#fff; border:1.5px solid var(--rule-strong); border-radius:12px; padding:18px; margin-top:16px;}
+
+/* ===== Reflection Qs ===== */
+.q-item{margin-bottom:22px;}
+.q-item .q-num{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:26px;height:26px; border-radius:50%; background:var(--blue); color:#fff;
+  font-size:0.78rem; font-weight:800; margin-right:8px; flex-shrink:0;
+}
+.q-item .q-text{font-weight:700; color:var(--ink); font-size:0.96rem; display:flex; align-items:flex-start; gap:2px; margin-bottom:8px;}
+
+/* ===== Print page ===== */
+.print-summary-actions{display:flex; gap:12px; flex-wrap:wrap; margin-top:18px;}
+.completion-badge{
+  display:flex; align-items:center; gap:16px;
+  background:linear-gradient(135deg,var(--green-pale),#fff);
+  border:1.5px solid var(--green); border-radius:14px; padding:20px 24px; margin-bottom:20px;
+}
+.completion-badge .pct{font-family:'JetBrains Mono'; font-size:2.2rem; font-weight:700; color:var(--green);}
+
+/* ===== Footer ===== */
+.site-footer{
+  text-align:center; padding:30px 0 10px; font-size:0.78rem; color:var(--ink-soft); opacity:0.6;
+}
+
+/* ===== Toast ===== */
+.toast{
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+  background:var(--ink); color:#fff; padding:12px 22px; border-radius:30px; font-size:0.86rem; font-weight:600;
+  box-shadow:var(--shadow-lg); opacity:0; pointer-events:none; transition:all .3s ease; z-index:100;
+  display:flex; align-items:center; gap:8px;
+}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+/* ===== Print styles ===== */
+@media print{
+  body{background:#fff !important;}
+  body::before{display:none;}
+  .rail-wrap, .site-header, .site-footer, .nav-buttons, .icon-btn, .toast, .timer-controls, .photo-upload-btn, .no-print{display:none !important;}
+  .page{display:none !important;}
+  #printPage{display:block !important;}
+  .card{box-shadow:none; border:1px solid #999; break-inside:avoid;}
+  .app{max-width:100%; padding:0;}
+}
+
+@media (max-width:680px){
+  .card{padding:24px 20px;}
+  h2.section-title{font-size:1.4rem;}
+  .timer-widget{flex-direction:column; align-items:flex-start;}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ===================== HEADER ===================== -->
+  <header class="site-header">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 46 56" fill="none">
+        <path d="M23 2C23 2 6 24 6 37C6 47.4934 13.6112 54 23 54C32.3888 54 40 47.4934 40 37C40 24 23 2 23 2Z" fill="var(--blue)" opacity="0.85"/>
+        <path d="M23 2C23 2 6 24 6 37C6 47.4934 13.6112 54 23 54" stroke="var(--ink)" stroke-width="1.5" fill="none"/>
+        <ellipse cx="17" cy="32" rx="3.2" ry="5" fill="#fff" opacity="0.35"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Walking Water</h1>
+        <p>Capillary Action Investigation</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="exportBtn" title="Save your progress to a file">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Save file
+      </button>
+      <button class="icon-btn" id="importBtn" title="Load a previously saved file">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Load
+      </button>
+      <input type="file" id="importFile" accept="application/json" style="display:none;">
+    </div>
+  </header>
+
+  <!-- ===================== PROGRESS RAIL ===================== -->
+  <div class="rail-wrap">
+    <nav class="rail" id="rail"></nav>
+  </div>
+
+  <!-- ===================== PAGE 0: WELCOME / READING ===================== -->
+  <section class="page" data-page="0">
+    <div class="card pinned">
+      <p class="eyebrow">Before you begin</p>
+      <h2 class="section-title">Welcome to your investigation</h2>
+      <p class="lede">This app will walk you through your whole science fair project, start to finish: the background science, your question and hypothesis, the live experiment with built-in timers, your data table, reflection questions, and a printable summary for your display board at the very end.</p>
+      <div class="callout">
+        <strong class="title">How this works</strong>
+        <p>Move through each tab above in order. Your answers, photos, and data save automatically in this browser. When you're done, click <b>Finish &amp; Print</b> at the end to generate a complete, ready-to-print packet.</p>
+      </div>
+      <label class="field-label">Your name<span class="hint">This appears on your printed packet</span></label>
+      <input type="text" id="studentName" placeholder="Type your name">
+      <div class="nav-buttons">
+        <span></span>
+        <button class="btn btn-primary" onclick="goTo(1)">Start reading <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== PAGE 1: BACKGROUND READING ===================== -->
+  <section class="page" data-page="1">
+    <div class="card pinned">
+      <p class="eyebrow">Section 1</p>
+      <h2 class="section-title">Background reading: the science behind it</h2>
+      <p class="lede">Read this carefully — understanding the <i>why</i> is what separates a good project from a great one. Judges love when you can explain the science yourself, not just describe what happened.</p>
+
+      <h3>What is capillary action?</h3>
+      <p>Capillary action is the ability of a liquid to flow through narrow spaces without help from — and sometimes against — outside forces like gravity. It's the same reason a paper towel soaks up a spill, a candle wick stays wet with melted wax, and trees can pull water from their roots all the way to their highest leaves.</p>
+      <p>Paper towels are made of thin plant fibers (mostly cellulose) woven loosely together. Between and inside those fibers are thousands of microscopic gaps and tubes, far too small to see with just your eyes. Water is drawn into these narrow spaces and travels through them — upward and outward — even though gravity is pulling it down the whole time.</p>
+
+      <h3>The two forces that make it happen</h3>
+      <p>Capillary action happens because of a tug-of-war between two kinds of molecular attraction:</p>
+      <div class="callout">
+        <p><b style="color:var(--ink)">Adhesion</b> — water molecules are attracted to the cellulose fibers of the paper towel. They stick to the paper's surface, the same way water clings to the side of a glass.</p>
+        <p style="margin-bottom:0"><b style="color:var(--ink)">Cohesion</b> — water molecules are also attracted to each other. Each water molecule is <i>polar</i> (it has a slightly positive end and a slightly negative end), so molecules link up through hydrogen bonds, almost like they're holding hands.</p>
+      </div>
+      <p>When adhesion pulls water onto the fibers, cohesion drags the rest of the water along behind it. Together, these two forces are strong enough to pull water upward through the narrow gaps in the paper, overcoming gravity — at least until the weight of the water climbing the towel finally balances out the pull of capillary action.</p>
+
+      <h3>Why does the food coloring move too?</h3>
+      <p>Food coloring is dissolved in the water, so its molecules get carried along for the ride. As the water travels up and across the fibers, it drags the dye with it — which is what lets you actually <i>see</i> the invisible process of capillary action happening in real time.</p>
+
+      <h3>Where you'll see this in real life</h3>
+      <ul style="padding-left:20px;">
+        <li>Plants and trees use capillary action (with a process called transpiration) to move water from roots to leaves.</li>
+        <li>A candle wick draws up melted wax to keep the flame burning.</li>
+        <li>A sponge soaking up a spilled liquid.</li>
+        <li>Fountain pens and felt-tip markers draw ink to the tip.</li>
+      </ul>
+
+      <div class="callout warm">
+        <strong class="title">Key vocabulary to use in your write-up</strong>
+        <div class="vocab-grid">
+          <div class="vocab-item"><b>Capillary action</b> — liquid moving through narrow spaces against gravity</div>
+          <div class="vocab-item"><b>Adhesion</b> — attraction between two different substances</div>
+          <div class="vocab-item"><b>Cohesion</b> — attraction between molecules of the same substance</div>
+          <div class="vocab-item"><b>Cellulose</b> — the plant fiber paper towels are made from</div>
+          <div class="vocab-item"><b>Polar molecule</b> — a molecule with a positive end and negative end, like water</div>
+        </div>
+      </div>
+
+      <h3>Reading check</h3>
+      <label class="field-label">In one or two sentences, explain capillary action in your own words — don't copy the text above.</label>
+      <textarea data-save="readingCheck" placeholder="Capillary action is..."></textarea>
+
+      <div class="nav-buttons">
+        <button class="btn btn-ghost" onclick="goTo(0)">Back</button>
+        <button class="btn btn-primary" onclick="goTo(2)">Next: question &amp; hypothesis <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== PAGE 2: QUESTION / HYPOTHESIS / VARIABLES ===================== -->
+  <section class="page" data-page="2">
+    <div class="card pinned">
+      <p class="eyebrow">Section 2</p>
+      <h2 class="section-title">Set up your investigation</h2>
+      <p class="lede">A strong project follows the scientific method. Fill in each part below before you experiment — this is what judges look at first.</p>
+
+      <h3>Your question</h3>
+      <div class="callout">
+        <p style="margin-bottom:0">How does capillary action move colored water through paper towels, and what factors affect how fast and how far it travels?</p>
+      </div>
+
+      <h3>Your hypothesis</h3>
+      <p style="font-size:0.9rem; opacity:0.8;">Write your educated guess as an "if... then... because..." statement, using what you learned in the reading.</p>
+      <div class="hyp-sentence">
+        If <input class="fill-blank" data-save="hyp1" placeholder="what you'll do" style="min-width:200px;">,
+        then <input class="fill-blank" data-save="hyp2" placeholder="what you predict" style="min-width:220px;">,
+        because <input class="fill-blank" data-save="hyp3" placeholder="your scientific reason" style="min-width:240px;">.
+      </div>
+
+      <h3>Variables</h3>
+      <table class="var-table">
+        <tr><th>Type</th><th>What it means</th><th>In your experiment</th></tr>
+        <tr><td><b>Independent</b><br><span style="opacity:0.7;font-size:0.8rem;">what you change</span></td><td>What you choose to change on purpose</td><td><input type="text" data-save="varIndep" placeholder="e.g. paper towel brand"></td></tr>
+        <tr><td><b>Dependent</b><br><span style="opacity:0.7;font-size:0.8rem;">what you measure</span></td><td>What you measure or observe changing</td><td><input type="text" data-save="varDep" value="How fast/far the colored water travels" placeholder="..."></td></tr>
+        <tr><td><b>Controlled</b><br><span style="opacity:0.7;font-size:0.8rem;">what stays the same</span></td><td>What stays the same every trial</td><td><input type="text" data-save="varControl" placeholder="e.g. water amount, room temp, food coloring"></td></tr>
+      </table>
+
+      <h3>Materials checklist</h3>
+      <ul class="checklist" id="materialsList">
+        <li><label><input type="checkbox" data-save="m0">3–4 clear plastic cups</label></li>
+        <li><label><input type="checkbox" data-save="m1">White paper towels (same brand)</label></li>
+        <li><label><input type="checkbox" data-save="m2">Food coloring (red &amp; blue)</label></li>
+        <li><label><input type="checkbox" data-save="m3">Water</label></li>
+        <li><label><input type="checkbox" data-save="m4">Scissors</label></li>
+        <li><label><input type="checkbox" data-save="m5">Metric ruler</label></li>
+        <li><label><input type="checkbox" data-save="m6">Timer (built into this app!)</label></li>
+        <li><label><input type="checkbox" data-save="m7">Phone or camera for photos</label></li>
+      </ul>
+
+      <div class="nav-buttons">
+        <button class="btn btn-ghost" onclick="goTo(1)">Back</button>
+        <button class="btn btn-primary" onclick="goTo(3)">Next: run the experiment <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== PAGE 3: PROCEDURE / EXPERIMENT ===================== -->
+  <section class="page" data-page="3">
+    <div class="card pinned">
+      <p class="eyebrow">Section 3</p>
+      <h2 class="section-title">Run the experiment</h2>
+      <p class="lede">Follow each step in order. Take the photos when prompted — they're what fill your display board later.</p>
+
+      <div class="step-block">
+        <h4>① Prepare your cups</h4>
+        <ol>
+          <li>Set out 3 clear cups in a row, evenly spaced, about 2–3 inches apart.</li>
+          <li>Fill the outer two cups about ⅔ full with water. Leave the middle cup empty.</li>
+          <li>Add 8–10 drops of food coloring to each filled cup — red in one, blue in the other — and stir gently.</li>
+        </ol>
+        <div class="photo-prompt">
+          <span class="cam">📷</span>
+          <div class="pp-text">
+            <b>Photo 1</b>
+            Your 3 cups lined up before adding the paper towels, clearly labeled.
+            <div class="photo-upload-row">
+              <button class="photo-upload-btn" onclick="triggerPhoto('photo1')">Add photo</button>
+              <input type="file" accept="image/*" capture="environment" id="photo1" style="display:none" onchange="handlePhoto(this,'thumbs1')">
+              <div class="photo-thumbs" id="thumbs1"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <h4>② Cut and fold your paper towel strips</h4>
+        <ol>
+          <li>Cut paper towels into strips ~2 inches wide and 8–10 inches long.</li>
+          <li>Fold each strip loosely into thirds lengthwise, like a paper fan.</li>
+          <li>You need 2 strips: one linking cup 1 → cup 2 (empty middle), one linking cup 2 → cup 3.</li>
+        </ol>
+      </div>
+
+      <div class="step-block">
+        <h4>③ Place the strips &amp; start the timer</h4>
+        <ol>
+          <li>Place one end of a strip in the red cup, the other end in the empty middle cup.</li>
+          <li>Place one end of the second strip in the empty middle cup, the other end in the blue cup.</li>
+          <li>Make sure the strips dip into the water but the cups aren't touching.</li>
+          <li>The instant everything is in place — start your timer below!</li>
+        </ol>
+        <div class="photo-prompt">
+          <span class="cam">📷</span>
+          <div class="pp-text">
+            <b>Photo 2 — your "before" shot</b>
+            Close-up of the strips placed in the cups, right as you start the timer.
+            <div class="photo-upload-row">
+              <button class="photo-upload-btn" onclick="triggerPhoto('photo2')">Add photo</button>
+              <input type="file" accept="image/*" capture="environment" id="photo2" style="display:none" onchange="handlePhoto(this,'thumbs2')">
+              <div class="photo-thumbs" id="thumbs2"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3>⏱ Live experiment timer</h3>
+      <p style="font-size:0.9rem;opacity:0.8;">Start this the moment your strips are placed. It will track elapsed time and ping you at each checkpoint below — keep this tab open, or just check back at the times listed.</p>
+      <div class="timer-widget">
+        <svg class="timer-visual" id="timerVisual" viewBox="0 0 90 120">
+          <rect x="10" y="10" width="20" height="100" rx="3" fill="#fff" stroke="var(--rule-strong)" stroke-width="1.5"/>
+          <rect id="fillRed" x="10" y="108" width="20" height="2" fill="#D94F4F" opacity="0.75"/>
+          <rect x="60" y="10" width="20" height="100" rx="3" fill="#fff" stroke="var(--rule-strong)" stroke-width="1.5"/>
+          <rect id="fillBlue" x="60" y="108" width="20" height="2" fill="#2E86AB" opacity="0.75"/>
+        </svg>
+        <div class="timer-info">
+          <div class="t-label">Elapsed time since you started</div>
+          <div class="timer-clock" id="clockDisplay">00:00:00</div>
+          <div class="timer-status" id="timerStatusText">Not started yet</div>
+          <div class="timer-controls">
+            <button class="btn btn-primary" id="startTimerBtn" onclick="startExperimentTimer()">Start timer</button>
+            <button class="btn btn-ghost" id="resetTimerBtn" onclick="resetExperimentTimer()">Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <h3>Checkpoints — log what you observe</h3>
+      <p style="font-size:0.9rem;opacity:0.8;">The card unlocks (and gently pings) once enough time has passed. You can also log early if you're checking manually.</p>
+      <div class="checkpoint-grid" id="checkpointGrid"></div>
+
+      <div class="photo-prompt" style="margin-top:18px;">
+        <span class="cam">📷</span>
+        <div class="pp-text">
+          <b>Photo 3 — checkpoint progress</b>
+          Snap a photo at each checkpoint from the same angle, so the progression is easy to compare.
+          <div class="photo-upload-row">
+            <button class="photo-upload-btn" onclick="triggerPhoto('photo3')">Add photo</button>
+            <input type="file" accept="image/*" capture="environment" id="photo3" style="display:none" onchange="handlePhoto(this,'thumbs3')" multiple>
+            <div class="photo-thumbs" id="thumbs3"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="photo-prompt">
+        <span class="cam">📷</span>
+        <div class="pp-text">
+          <b>Photo 4 — final result (24 hrs)</b>
+          A clear final photo showing the new color that formed in the middle cup.
+          <div class="photo-upload-row">
+            <button class="photo-upload-btn" onclick="triggerPhoto('photo4')">Add photo</button>
+            <input type="file" accept="image/*" capture="environment" id="photo4" style="display:none" onchange="handlePhoto(this,'thumbs4')">
+            <div class="photo-thumbs" id="thumbs4"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout warm" style="margin-top:20px;">
+        <strong class="title">Safety &amp; tidiness</strong>
+        <p style="margin-bottom:0">Food coloring stains — work on a covered surface. Keep the setup somewhere it won't be bumped for 24 hours. Wash your hands after handling the dye.</p>
+      </div>
+
+      <div class="nav-buttons">
+        <button class="btn btn-ghost" onclick="goTo(2)">Back</button>
+        <button class="btn btn-primary" onclick="goTo(4)">Next: review your data <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== PAGE 4: DATA TABLE / GRAPH ===================== -->
+  <section class="page" data-page="4">
+    <div class="card pinned">
+      <p class="eyebrow">Section 4</p>
+      <h2 class="section-title">Your results</h2>
+      <p class="lede">Here's everything you logged at each checkpoint. If a row looks empty, go back to Section 3 and fill it in.</p>
+
+      <table class="data-table" id="reviewTable">
+        <thead><tr><th>Time</th><th>Red — distance (mm)</th><th>Blue — distance (mm)</th><th>Observations</th></tr></thead>
+        <tbody id="reviewTableBody"></tbody>
+      </table>
+
+      <h3>Your graph</h3>
+      <p style="font-size:0.9rem;opacity:0.8;">This is generated automatically from your checkpoint data above — it'll fill in as you log more checkpoints.</p>
+      <div class="chart-wrap">
+        <svg id="chartSvg" viewBox="0 0 600 320" width="100%" style="max-width:600px; display:block; margin:0 auto;"></svg>
+      </div>
+
+      <div class="nav-buttons">
+        <button class="btn btn-ghost" onclick="goTo(3)">Back</button>
+        <button class="btn btn-primary" onclick="goTo(5)">Next: reflect <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== PAGE 5: REFLECTION ===================== -->
+  <section class="page" data-page="5">
+    <div class="card pinned">
+      <p class="eyebrow">Section 5</p>
+      <h2 class="section-title">Analyze &amp; reflect</h2>
+      <p class="lede">This is where raw data becomes real understanding. Answer in full sentences — these can go straight onto your board.</p>
+
+      <div class="q-item">
+        <div class="q-text"><span class="q-num">1</span>What happened to your colored water over time?</div>
+        <textarea data-save="r1"></textarea>
+      </div>
+      <div class="q-item">
+        <div class="q-text"><span class="q-num">2</span>Was your hypothesis supported by what you observed? Explain using your data.</div>
+        <textarea data-save="r2"></textarea>
+      </div>
+      <div class="q-item">
+        <div class="q-text"><span class="q-num">3</span>Explain why the water moved upward against gravity. Use the words <i>adhesion</i> and <i>cohesion</i> correctly.</div>
+        <textarea data-save="r3"></textarea>
+      </div>
+      <div class="q-item">
+        <div class="q-text"><span class="q-num">4</span>What new color appeared where red and blue met, and why?</div>
+        <textarea data-save="r4"></textarea>
+      </div>
+      <div class="q-item">
+        <div class="q-text"><span class="q-num">5</span>During which time period did the water travel fastest? Why do you think that is?</div>
+        <textarea data-save="r5"></textarea>
+      </div>
+      <div class="q-item">
+        <div class="q-text"><span class="q-num">6</span>If you repeated this experiment, what's one variable you could change? What would you predict?</div>
+        <textarea data-save="r6"></textarea>
+      </div>
+      <div class="q-item">
+        <div class="q-text"><span class="q-num">7</span>Where else in the real world does capillary action matter? Name two examples.</div>
+        <textarea data-save="r7"></textarea>
+      </div>
+      <div class="q-item">
+        <div class="q-text"><span class="q-num">8</span>What was the most surprising or interesting part of this project for you?</div>
+        <textarea data-save="r8"></textarea>
+      </div>
+
+      <h3>Your conclusion (for the board)</h3>
+      <label class="field-label">Sum it up in 2–3 confident sentences: what you found, whether your hypothesis was supported, and one real-world connection.</label>
+      <textarea data-save="conclusion" style="min-height:110px;"></textarea>
+
+      <div class="nav-buttons">
+        <button class="btn btn-ghost" onclick="goTo(4)">Back</button>
+        <button class="btn btn-primary" onclick="goTo(6)">Finish &amp; build my packet <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== PAGE 6: PRINT / FINISH ===================== -->
+  <section class="page" data-page="6">
+    <div class="card pinned">
+      <p class="eyebrow">Section 6</p>
+      <h2 class="section-title">Your printable packet</h2>
+
+      <div class="completion-badge">
+        <div class="pct" id="completionPct">0%</div>
+        <div>
+          <div style="font-weight:700;color:var(--ink)">of your project is filled in</div>
+          <div style="font-size:0.85rem;opacity:0.75;" id="completionNote">Keep going — fill in earlier sections for a stronger packet.</div>
+        </div>
+      </div>
+
+      <p class="lede">When you're ready, print this whole packet (background, hypothesis, data, graph, photos, and reflection) and cut/paste the sections onto your tri-fold board.</p>
+
+      <div class="callout green">
+        <strong class="title">Board layout suggestion</strong>
+        <ul>
+          <li><b>Left panel:</b> Title, Question, Hypothesis, Background summary</li>
+          <li><b>Center panel:</b> Procedure steps with your best photos, Materials list</li>
+          <li><b>Right panel:</b> Data table, Graph, Final photos, Conclusion</li>
+        </ul>
+      </div>
+
+      <div class="print-summary-actions">
+        <button class="btn btn-primary" onclick="window.print()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Print my packet
+        </button>
+        <button class="btn btn-ghost" id="exportBtn2" onclick="exportData()">Save progress as a file</button>
+      </div>
+
+      <div class="nav-buttons" style="margin-top:24px;">
+        <button class="btn btn-ghost" onclick="goTo(5)">Back</button>
+        <span></span>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">Walking Water — a capillary action investigation · Good luck at the science fair! 🏆</footer>
+</div>
+
+<!-- ===================== HIDDEN PRINTABLE PACKET ===================== -->
+<div id="printPage" style="display:none;">
+  <div style="max-width:780px;margin:0 auto;font-family:'Inter',sans-serif;color:#1B3A4B;padding:30px;">
+    <h1 id="pTitle" style="font-family:'Caveat',cursive;font-size:2.6rem;margin-bottom:0;color:#1B3A4B;">Walking Water: A Capillary Action Investigation</h1>
+    <p id="pByline" style="font-size:0.95rem;color:#5C5248;margin-top:4px;"></p>
+    <hr style="border:none;border-top:2px solid #2E86AB;margin:18px 0;">
+
+    <h2 style="color:#2E86AB;">Background</h2>
+    <p id="pReading"></p>
+
+    <h2 style="color:#2E86AB;">Question &amp; Hypothesis</h2>
+    <p id="pHyp"></p>
+    <table id="pVarTable" style="width:100%;border-collapse:collapse;font-size:0.85rem;margin-top:8px;"></table>
+
+    <h2 style="color:#2E86AB;page-break-before:always;">Procedure Summary</h2>
+    <ol style="font-size:0.9rem;line-height:1.6;">
+      <li>Set up 3 cups (2 colored, 1 empty middle), connect with folded paper towel strips.</li>
+      <li>Start timer the moment strips are placed.</li>
+      <li>Observe and record at each checkpoint.</li>
+      <li>After 24 hours, record final results and the new mixed color.</li>
+    </ol>
+    <div id="pPhotos" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;"></div>
+
+    <h2 style="color:#2E86AB;page-break-before:always;">Data Table</h2>
+    <table id="pDataTable" style="width:100%;border-collapse:collapse;font-size:0.82rem;"></table>
+
+    <h2 style="color:#2E86AB;margin-top:24px;">Graph</h2>
+    <div id="pChart"></div>
+
+    <h2 style="color:#2E86AB;page-break-before:always;">Reflection</h2>
+    <div id="pReflection" style="font-size:0.9rem;line-height:1.6;"></div>
+
+    <h2 style="color:#2E86AB;">Conclusion</h2>
+    <p id="pConclusion" style="font-weight:600;"></p>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   STATE MANAGEMENT
+   ============================================================ */
+const STORAGE_KEY = 'walkingWaterProject_v1';
+let state = {
+  studentName:'', readingCheck:'',
+  hyp1:'',hyp2:'',hyp3:'',
+  varIndep:'',varDep:'How fast/far the colored water travels',varControl:'',
+  m0:false,m1:false,m2:false,m3:false,m4:false,m5:false,m6:false,m7:false,
+  timerStart:null, timerElapsed:0, timerRunning:false,
+  checkpoints:{}, // {key: {distRed, distBlue, obs, loggedAt}}
+  photos:{photo1:[],photo2:[],photo3:[],photo4:[]},
+  r1:'',r2:'',r3:'',r4:'',r5:'',r6:'',r7:'',r8:'',conclusion:'',
+  currentPage:0
+};
+
+const CHECKPOINTS = [
+  {key:'t0', label:'Start (0:00)', seconds:0},
+  {key:'t5', label:'5 minutes', seconds:5*60},
+  {key:'t15', label:'15 minutes', seconds:15*60},
+  {key:'t30', label:'30 minutes', seconds:30*60},
+  {key:'t60', label:'1 hour', seconds:60*60},
+  {key:'t120', label:'2 hours', seconds:120*60},
+  {key:'t1440', label:'24 hours (next day)', seconds:1440*60},
+];
+
+function save(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){ /* storage unavailable */ }
+}
+function load(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){ const loaded = JSON.parse(raw); state = Object.assign(state, loaded); }
+  }catch(e){ /* ignore */ }
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._tm);
+  showToast._tm = setTimeout(()=> t.classList.remove('show'), 2200);
+}
+
+/* ============================================================
+   NAVIGATION / RAIL
+   ============================================================ */
+const PAGES = [
+  {label:'Welcome'},
+  {label:'Reading'},
+  {label:'Hypothesis'},
+  {label:'Experiment'},
+  {label:'Data'},
+  {label:'Reflect'},
+  {label:'Print'},
+];
+
+function buildRail(){
+  const rail = document.getElementById('rail');
+  rail.innerHTML = '';
+  PAGES.forEach((p,i)=>{
+    const btn = document.createElement('button');
+    btn.className = 'rail-step';
+    btn.onclick = ()=>goTo(i);
+    btn.innerHTML = `<span class="dot"><span>${i+1}</span></span><span class="label">${p.label}</span>`;
+    rail.appendChild(btn);
+  });
+}
+
+function goTo(idx){
+  state.currentPage = idx;
+  if(!state.visited) state.visited = [];
+  if(!state.visited.includes(idx)) state.visited.push(idx);
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active', Number(p.dataset.page)===idx));
+  document.querySelectorAll('.rail-step').forEach((el,i)=>{
+    el.classList.toggle('active', i===idx);
+    el.classList.toggle('done', i!==idx && state.visited.includes(i));
+  });
+  window.scrollTo({top:0, behavior:'smooth'});
+  if(idx===4) renderDataReview();
+  if(idx===6) renderPrintPacket();
+  save();
+}
+
+/* ============================================================
+   FIELD BINDING (auto-save any [data-save] field)
+   ============================================================ */
+function bindFields(){
+  document.querySelectorAll('[data-save]').forEach(el=>{
+    const key = el.dataset.save;
+    // init value
+    if(el.type==='checkbox'){
+      el.checked = !!state[key];
+      el.addEventListener('change', ()=>{ state[key]=el.checked; save(); updateCompletion(); });
+    } else {
+      if(state[key]!==undefined && state[key]!==null) el.value = state[key];
+      el.addEventListener('input', ()=>{ state[key]=el.value; save(); updateCompletion(); });
+    }
+  });
+}
+
+/* ============================================================
+   PHOTO HANDLING (stored as base64 in-memory + localStorage)
+   ============================================================ */
+function triggerPhoto(inputId){ document.getElementById(inputId).click(); }
+
+function handlePhoto(input, thumbsId){
+  const files = Array.from(input.files || []);
+  const key = input.id;
+  if(!state.photos[key]) state.photos[key] = [];
+  let remaining = files.length;
+  if(remaining===0) return;
+  files.forEach(file=>{
+    const reader = new FileReader();
+    reader.onload = e=>{
+      state.photos[key].push(e.target.result);
+      renderThumbs(key, thumbsId);
+      save();
+      updateCompletion();
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = '';
+}
+
+function renderThumbs(key, thumbsId){
+  const wrap = document.getElementById(thumbsId);
+  wrap.innerHTML = '';
+  (state.photos[key]||[]).forEach((src, i)=>{
+    const div = document.createElement('div');
+    div.className = 'photo-thumb';
+    div.innerHTML = `<img src="${src}"><button onclick="removePhoto('${key}',${i},'${thumbsId}')">✕</button>`;
+    wrap.appendChild(div);
+  });
+}
+function removePhoto(key, i, thumbsId){
+  state.photos[key].splice(i,1);
+  renderThumbs(key, thumbsId);
+  save();
+  updateCompletion();
+}
+function renderAllThumbs(){
+  renderThumbs('photo1','thumbs1');
+  renderThumbs('photo2','thumbs2');
+  renderThumbs('photo3','thumbs3');
+  renderThumbs('photo4','thumbs4');
+}
+
+/* ============================================================
+   EXPERIMENT TIMER
+   ============================================================ */
+let timerInterval = null;
+
+function startExperimentTimer(){
+  if(state.timerRunning) return;
+  state.timerStart = Date.now() - (state.timerElapsed*1000);
+  state.timerRunning = true;
+  save();
+  document.getElementById('startTimerBtn').textContent = 'Running…';
+  document.getElementById('startTimerBtn').disabled = true;
+  tickTimer();
+  timerInterval = setInterval(tickTimer, 1000);
+  showToast('Timer started — good luck! 💧');
+}
+
+function resetExperimentTimer(){
+  if(!confirm('Reset the timer back to zero? This will not erase your logged checkpoint data.')) return;
+  clearInterval(timerInterval);
+  state.timerRunning = false;
+  state.timerElapsed = 0;
+  state.timerStart = null;
+  document.getElementById('startTimerBtn').textContent = 'Start timer';
+  document.getElementById('startTimerBtn').disabled = false;
+  document.getElementById('timerStatusText').textContent = 'Not started yet';
+  document.getElementById('timerStatusText').className = 'timer-status';
+  updateClockDisplay(0);
+  save();
+}
+
+function tickTimer(){
+  if(!state.timerRunning) return;
+  const elapsed = Math.floor((Date.now() - state.timerStart)/1000);
+  state.timerElapsed = elapsed;
+  updateClockDisplay(elapsed);
+  updateTimerVisual(elapsed);
+  checkCheckpointUnlocks(elapsed);
+  if(elapsed % 5 === 0) save();
+}
+
+function updateClockDisplay(sec){
+  const h = String(Math.floor(sec/3600)).padStart(2,'0');
+  const m = String(Math.floor((sec%3600)/60)).padStart(2,'0');
+  const s = String(sec%60).padStart(2,'0');
+  document.getElementById('clockDisplay').textContent = `${h}:${m}:${s}`;
+  const statusEl = document.getElementById('timerStatusText');
+  if(state.timerRunning){
+    statusEl.textContent = 'Running — keep this tab open, or check back at checkpoint times.';
+    statusEl.className = 'timer-status running';
+  }
+}
+
+function updateTimerVisual(sec){
+  // fill rises toward 100 over the course of 24 hrs (1440 min), capped
+  const maxSec = 1440*60;
+  const pct = Math.min(1, sec/maxSec);
+  const h = 96 * Math.sqrt(pct); // sqrt for a nicer visual ramp early on
+  document.getElementById('fillRed').setAttribute('y', 108-h);
+  document.getElementById('fillRed').setAttribute('height', Math.max(2,h));
+  document.getElementById('fillBlue').setAttribute('y', 108-h);
+  document.getElementById('fillBlue').setAttribute('height', Math.max(2,h));
+}
+
+function checkCheckpointUnlocks(elapsed){
+  CHECKPOINTS.forEach(cp=>{
+    if(cp.seconds>0 && elapsed>=cp.seconds && !state.checkpoints[cp.key]?._pinged){
+      if(!state.checkpoints[cp.key]) state.checkpoints[cp.key]={};
+      if(elapsed - cp.seconds < 3){ showToast(`⏰ It's time for your "${cp.label}" checkpoint!`); }
+      state.checkpoints[cp.key]._pinged = true;
+    }
+  });
+  renderCheckpoints();
+}
+
+/* ============================================================
+   CHECKPOINTS UI
+   ============================================================ */
+function renderCheckpoints(){
+  const grid = document.getElementById('checkpointGrid');
+  grid.innerHTML = '';
+  const elapsed = state.timerElapsed || 0;
+  CHECKPOINTS.forEach(cp=>{
+    const data = state.checkpoints[cp.key] || {};
+    const logged = data.distRed || data.distBlue || data.obs;
+    const unlocked = elapsed >= cp.seconds || cp.seconds===0;
+    const card = document.createElement('div');
+    card.className = 'checkpoint-card' + (logged ? ' logged':'');
+    card.innerHTML = `
+      <div class="cp-time">${cp.label} <span class="cp-badge">${logged ? 'Logged' : (unlocked? 'Ready':'Locked')}</span></div>
+      <div class="cp-fields">
+        <div>
+          <span class="cp-field-label">Red (mm)</span>
+          <input type="text" inputmode="numeric" value="${data.distRed||''}" placeholder="0" onchange="updateCheckpoint('${cp.key}','distRed',this.value)">
+        </div>
+        <div>
+          <span class="cp-field-label">Blue (mm)</span>
+          <input type="text" inputmode="numeric" value="${data.distBlue||''}" placeholder="0" onchange="updateCheckpoint('${cp.key}','distBlue',this.value)">
+        </div>
+      </div>
+      <div class="cp-obs">
+        <span class="cp-field-label">Observations</span>
+        <textarea placeholder="color, speed, anything unusual..." onchange="updateCheckpoint('${cp.key}','obs',this.value)">${data.obs||''}</textarea>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+function updateCheckpoint(key, field, value){
+  if(!state.checkpoints[key]) state.checkpoints[key] = {};
+  state.checkpoints[key][field] = value;
+  save();
+  renderCheckpoints();
+  updateCompletion();
+}
+
+/* ============================================================
+   DATA REVIEW TABLE + CHART (page 4)
+   ============================================================ */
+function renderDataReview(){
+  const tbody = document.getElementById('reviewTableBody');
+  tbody.innerHTML = '';
+  CHECKPOINTS.forEach(cp=>{
+    const d = state.checkpoints[cp.key] || {};
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${cp.label}</td><td>${d.distRed||'—'}</td><td>${d.distBlue||'—'}</td><td>${d.obs||'—'}</td>`;
+    tbody.appendChild(tr);
+  });
+  drawChart('chartSvg');
+}
+
+function drawChart(svgId){
+  const svg = document.getElementById(svgId);
+  const W=600,H=320, padL=50,padR=20,padT=20,padB=50;
+  const plotW = W-padL-padR, plotH = H-padT-padB;
+  const pts = CHECKPOINTS.map((cp,i)=>{
+    const d = state.checkpoints[cp.key]||{};
+    return { x:i, red:parseFloat(d.distRed)||0, blue:parseFloat(d.distBlue)||0, label:cp.label };
+  });
+  const maxVal = Math.max(20, ...pts.map(p=>Math.max(p.red,p.blue)));
+  const xStep = plotW/(pts.length-1);
+  const xy = (i,v)=> [padL + i*xStep, padT + plotH - (v/maxVal)*plotH];
+
+  let svgContent = `<rect x="0" y="0" width="${W}" height="${H}" fill="white"/>`;
+  // gridlines
+  for(let g=0; g<=4; g++){
+    const y = padT + plotH - (g/4)*plotH;
+    svgContent += `<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="#E5DDD0" stroke-width="1"/>`;
+    svgContent += `<text x="${padL-8}" y="${y+4}" font-size="10" fill="#5C5248" text-anchor="end" font-family="JetBrains Mono, monospace">${Math.round(maxVal*g/4)}</text>`;
+  }
+  // x labels
+  pts.forEach((p,i)=>{
+    const [x] = xy(i,0);
+    svgContent += `<text x="${x}" y="${H-12}" font-size="9" fill="#5C5248" text-anchor="middle">${p.label.split(' ')[0]}</text>`;
+  });
+  // lines
+  function pathFor(field, color){
+    const d = pts.map((p,i)=>{ const [x,y]=xy(i,p[field]); return `${i===0?'M':'L'}${x},${y}`; }).join(' ');
+    return `<path d="${d}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+  }
+  svgContent += pathFor('red','#D94F4F');
+  svgContent += pathFor('blue','#2E86AB');
+  pts.forEach((p,i)=>{
+    const [xr,yr]=xy(i,p.red); const [xb,yb]=xy(i,p.blue);
+    svgContent += `<circle cx="${xr}" cy="${yr}" r="3.5" fill="#D94F4F"/>`;
+    svgContent += `<circle cx="${xb}" cy="${yb}" r="3.5" fill="#2E86AB"/>`;
+  });
+  // legend
+  svgContent += `<circle cx="${W-150}" cy="14" r="4" fill="#D94F4F"/><text x="${W-140}" y="18" font-size="11" fill="#3D3128">Red side</text>`;
+  svgContent += `<circle cx="${W-70}" cy="14" r="4" fill="#2E86AB"/><text x="${W-60}" y="18" font-size="11" fill="#3D3128">Blue side</text>`;
+  svgContent += `<text x="${padL}" y="14" font-size="11" fill="#1B3A4B" font-weight="700">Distance traveled (mm)</text>`;
+
+  svg.innerHTML = svgContent;
+}
+
+/* ============================================================
+   COMPLETION %
+   ============================================================ */
+function updateCompletion(){
+  const trackedTextFields = ['readingCheck','hyp1','hyp2','hyp3','varIndep','varControl','r1','r2','r3','r4','r5','r6','r7','r8','conclusion'];
+  let filled = 0, total = trackedTextFields.length;
+  trackedTextFields.forEach(k=>{ if(state[k] && state[k].trim()) filled++; });
+  const cpFilled = Object.values(state.checkpoints).filter(c=>c.distRed||c.distBlue||c.obs).length;
+  total += CHECKPOINTS.length; filled += cpFilled;
+  const photoCount = Object.values(state.photos).reduce((a,arr)=>a+(arr?.length||0),0);
+  total += 4; filled += Math.min(4,photoCount);
+  const pct = Math.round((filled/total)*100);
+  const pctEl = document.getElementById('completionPct');
+  if(pctEl){
+    pctEl.textContent = pct+'%';
+    document.getElementById('completionNote').textContent = pct>=85 ? 'Looking great — ready to print!' : pct>=50 ? 'Solid progress — fill in a few more sections for an even stronger packet.' : 'Keep going — fill in earlier sections for a stronger packet.';
+  }
+}
+
+/* ============================================================
+   PRINT PACKET BUILDER
+   ============================================================ */
+function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function renderPrintPacket(){
+  document.getElementById('pByline').textContent = state.studentName ? `By ${state.studentName}` : '';
+  document.getElementById('pReading').textContent = state.readingCheck || '(Reading reflection not yet filled in.)';
+
+  const hyp = `If ${state.hyp1||'____'}, then ${state.hyp2||'____'}, because ${state.hyp3||'____'}.`;
+  document.getElementById('pHyp').textContent = hyp;
+
+  const vt = document.getElementById('pVarTable');
+  vt.innerHTML = `
+    <tr><th style="background:#1B3A4B;color:#fff;padding:6px;text-align:left;">Type</th><th style="background:#1B3A4B;color:#fff;padding:6px;text-align:left;">Value</th></tr>
+    <tr><td style="padding:6px;border-bottom:1px solid #ddd;">Independent</td><td style="padding:6px;border-bottom:1px solid #ddd;">${esc(state.varIndep)||'—'}</td></tr>
+    <tr><td style="padding:6px;border-bottom:1px solid #ddd;">Dependent</td><td style="padding:6px;border-bottom:1px solid #ddd;">${esc(state.varDep)||'—'}</td></tr>
+    <tr><td style="padding:6px;border-bottom:1px solid #ddd;">Controlled</td><td style="padding:6px;border-bottom:1px solid #ddd;">${esc(state.varControl)||'—'}</td></tr>
+  `;
+
+  // photos
+  const pPhotos = document.getElementById('pPhotos');
+  pPhotos.innerHTML = '';
+  ['photo1','photo2','photo3','photo4'].forEach(key=>{
+    (state.photos[key]||[]).forEach(src=>{
+      const img = document.createElement('img');
+      img.src = src;
+      img.style.cssText = 'width:140px;height:140px;object-fit:cover;border-radius:8px;border:1px solid #ccc;';
+      pPhotos.appendChild(img);
+    });
+  });
+  if(!pPhotos.children.length){ pPhotos.innerHTML = '<p style="opacity:0.6;font-size:0.85rem;">(No photos added yet.)</p>'; }
+
+  // data table
+  const dt = document.getElementById('pDataTable');
+  let rows = `<tr><th style="background:#1B3A4B;color:#fff;padding:6px;">Time</th><th style="background:#1B3A4B;color:#fff;padding:6px;">Red (mm)</th><th style="background:#1B3A4B;color:#fff;padding:6px;">Blue (mm)</th><th style="background:#1B3A4B;color:#fff;padding:6px;">Observations</th></tr>`;
+  CHECKPOINTS.forEach(cp=>{
+    const d = state.checkpoints[cp.key]||{};
+    rows += `<tr><td style="padding:6px;border-bottom:1px solid #ddd;">${cp.label}</td><td style="padding:6px;border-bottom:1px solid #ddd;">${esc(d.distRed)||'—'}</td><td style="padding:6px;border-bottom:1px solid #ddd;">${esc(d.distBlue)||'—'}</td><td style="padding:6px;border-bottom:1px solid #ddd;">${esc(d.obs)||'—'}</td></tr>`;
+  });
+  dt.innerHTML = rows;
+
+  // chart -> clone svg
+  drawChart('chartSvg');
+  const liveSvg = document.getElementById('chartSvg');
+  document.getElementById('pChart').innerHTML = liveSvg.outerHTML;
+
+  // reflection
+  const qs = [
+    ['What happened to your colored water over time?','r1'],
+    ['Was your hypothesis supported by what you observed?','r2'],
+    ['Why did the water move upward against gravity?','r3'],
+    ['What new color appeared, and why?','r4'],
+    ['When did the water travel fastest, and why?','r5'],
+    ['What variable would you change next time?','r6'],
+    ['Where else does capillary action matter in real life?','r7'],
+    ['What was most surprising about this project?','r8'],
+  ];
+  document.getElementById('pReflection').innerHTML = qs.map(([q,k],i)=>`<p><b>${i+1}. ${esc(q)}</b><br>${esc(state[k])||'<i style="opacity:0.5">(not answered)</i>'}</p>`).join('');
+
+  document.getElementById('pConclusion').textContent = state.conclusion || '(Conclusion not yet written.)';
+
+  updateCompletion();
+}
+
+/* ============================================================
+   EXPORT / IMPORT (save file so progress survives across devices)
+   ============================================================ */
+function exportData(){
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const name = (state.studentName || 'my').replace(/[^a-z0-9]/gi,'_');
+  a.href = url; a.download = `${name}_walking_water_project.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Saved! Keep this file safe to continue later.');
+}
+
+function importData(file){
+  const reader = new FileReader();
+  reader.onload = e=>{
+    try{
+      const loaded = JSON.parse(e.target.result);
+      state = Object.assign(state, loaded);
+      save();
+      location.reload();
+    }catch(err){
+      alert('That file could not be read. Make sure you picked the .json file you saved earlier.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+function init(){
+  load();
+  buildRail();
+  bindFields();
+  renderAllThumbs();
+  renderCheckpoints();
+  updateClockDisplay(state.timerElapsed||0);
+  updateTimerVisual(state.timerElapsed||0);
+  if(state.timerRunning){
+    document.getElementById('startTimerBtn').textContent = 'Running…';
+    document.getElementById('startTimerBtn').disabled = true;
+    timerInterval = setInterval(tickTimer, 1000);
+  }
+  goTo(state.currentPage||0);
+  updateCompletion();
+
+  document.getElementById('exportBtn').addEventListener('click', exportData);
+  document.getElementById('importBtn').addEventListener('click', ()=>document.getElementById('importFile').click());
+  document.getElementById('importFile').addEventListener('change', function(){
+    if(this.files[0]) importData(this.files[0]);
+  });
+}
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
