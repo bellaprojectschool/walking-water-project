@@ -331,6 +331,8 @@ textarea{min-height:84px; line-height:1.5;}
   border:none; border-radius:8px; padding:8px 14px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;
 }
 .photo-upload-btn:hover{background:#a8690f;}
+.photo-upload-btn.lib{background:#fff; color:var(--amber); border:1.5px solid var(--amber);}
+.photo-upload-btn.lib:hover{background:var(--amber-pale);}
 .photo-thumbs{display:flex; gap:8px; flex-wrap:wrap;}
 .photo-thumb{position:relative; width:64px;height:64px; border-radius:8px; overflow:hidden; border:2px solid var(--amber); flex-shrink:0;}
 .photo-thumb img{width:100%;height:100%;object-fit:cover; display:block;}
@@ -603,8 +605,10 @@ textarea{min-height:84px; line-height:1.5;}
             <b>Photo 1</b>
             Your 3 cups lined up before adding the paper towels, clearly labeled.
             <div class="photo-upload-row">
-              <button class="photo-upload-btn" onclick="triggerPhoto('photo1')">Add photo</button>
+              <button class="photo-upload-btn" onclick="triggerPhoto('photo1')">📸 Take photo</button>
               <input type="file" accept="image/*" capture="environment" id="photo1" style="display:none" onchange="handlePhoto(this,'thumbs1')">
+              <button class="photo-upload-btn lib" onclick="triggerPhoto('photo1lib')">🖼️ Choose from library</button>
+              <input type="file" accept="image/*" id="photo1lib" style="display:none" onchange="handlePhoto(this,'thumbs1')" multiple>
               <div class="photo-thumbs" id="thumbs1"></div>
             </div>
           </div>
@@ -634,8 +638,10 @@ textarea{min-height:84px; line-height:1.5;}
             <b>Photo 2 — your "before" shot</b>
             Close-up of the strips placed in the cups, right as you start the timer.
             <div class="photo-upload-row">
-              <button class="photo-upload-btn" onclick="triggerPhoto('photo2')">Add photo</button>
+              <button class="photo-upload-btn" onclick="triggerPhoto('photo2')">📸 Take photo</button>
               <input type="file" accept="image/*" capture="environment" id="photo2" style="display:none" onchange="handlePhoto(this,'thumbs2')">
+              <button class="photo-upload-btn lib" onclick="triggerPhoto('photo2lib')">🖼️ Choose from library</button>
+              <input type="file" accept="image/*" id="photo2lib" style="display:none" onchange="handlePhoto(this,'thumbs2')" multiple>
               <div class="photo-thumbs" id="thumbs2"></div>
             </div>
           </div>
@@ -672,8 +678,10 @@ textarea{min-height:84px; line-height:1.5;}
           <b>Photo 3 — checkpoint progress</b>
           Snap a photo at each checkpoint from the same angle, so the progression is easy to compare.
           <div class="photo-upload-row">
-            <button class="photo-upload-btn" onclick="triggerPhoto('photo3')">Add photo</button>
+            <button class="photo-upload-btn" onclick="triggerPhoto('photo3')">📸 Take photo</button>
             <input type="file" accept="image/*" capture="environment" id="photo3" style="display:none" onchange="handlePhoto(this,'thumbs3')" multiple>
+            <button class="photo-upload-btn lib" onclick="triggerPhoto('photo3lib')">🖼️ Choose from library</button>
+            <input type="file" accept="image/*" id="photo3lib" style="display:none" onchange="handlePhoto(this,'thumbs3')" multiple>
             <div class="photo-thumbs" id="thumbs3"></div>
           </div>
         </div>
@@ -685,8 +693,10 @@ textarea{min-height:84px; line-height:1.5;}
           <b>Photo 4 — final result (24 hrs)</b>
           A clear final photo showing the new color that formed in the middle cup.
           <div class="photo-upload-row">
-            <button class="photo-upload-btn" onclick="triggerPhoto('photo4')">Add photo</button>
+            <button class="photo-upload-btn" onclick="triggerPhoto('photo4')">📸 Take photo</button>
             <input type="file" accept="image/*" capture="environment" id="photo4" style="display:none" onchange="handlePhoto(this,'thumbs4')">
+            <button class="photo-upload-btn lib" onclick="triggerPhoto('photo4lib')">🖼️ Choose from library</button>
+            <input type="file" accept="image/*" id="photo4lib" style="display:none" onchange="handlePhoto(this,'thumbs4')" multiple>
             <div class="photo-thumbs" id="thumbs4"></div>
           </div>
         </div>
@@ -971,10 +981,9 @@ function triggerPhoto(inputId){ document.getElementById(inputId).click(); }
 
 function handlePhoto(input, thumbsId){
   const files = Array.from(input.files || []);
-  const key = input.id;
+  const key = input.id.replace(/lib$/, ''); // photo1lib and photo1 both store under "photo1"
   if(!state.photos[key]) state.photos[key] = [];
-  let remaining = files.length;
-  if(remaining===0) return;
+  if(files.length===0) return;
   files.forEach(file=>{
     const reader = new FileReader();
     reader.onload = e=>{
@@ -1076,14 +1085,32 @@ function updateTimerVisual(sec){
 }
 
 function checkCheckpointUnlocks(elapsed){
+  let anyNewlyUnlocked = false;
   CHECKPOINTS.forEach(cp=>{
     if(cp.seconds>0 && elapsed>=cp.seconds && !state.checkpoints[cp.key]?._pinged){
       if(!state.checkpoints[cp.key]) state.checkpoints[cp.key]={};
       if(elapsed - cp.seconds < 3){ showToast(`⏰ It's time for your "${cp.label}" checkpoint!`); }
       state.checkpoints[cp.key]._pinged = true;
+      anyNewlyUnlocked = true;
     }
   });
-  renderCheckpoints();
+  // Only touch the badge text/class on each card — never rebuild the inputs themselves,
+  // or the student loses whatever they're mid-typing.
+  refreshCheckpointBadges();
+}
+
+function refreshCheckpointBadges(){
+  const elapsed = state.timerElapsed || 0;
+  CHECKPOINTS.forEach(cp=>{
+    const card = document.getElementById('cp-card-'+cp.key);
+    if(!card) return;
+    const data = state.checkpoints[cp.key] || {};
+    const logged = !!(data.distRed || data.distBlue || data.obs);
+    const unlocked = elapsed >= cp.seconds || cp.seconds===0;
+    const badge = card.querySelector('.cp-badge');
+    badge.textContent = logged ? 'Logged' : (unlocked ? 'Ready' : 'Locked');
+    card.classList.toggle('logged', logged);
+  });
 }
 
 /* ============================================================
@@ -1095,27 +1122,33 @@ function renderCheckpoints(){
   const elapsed = state.timerElapsed || 0;
   CHECKPOINTS.forEach(cp=>{
     const data = state.checkpoints[cp.key] || {};
-    const logged = data.distRed || data.distBlue || data.obs;
+    const logged = !!(data.distRed || data.distBlue || data.obs);
     const unlocked = elapsed >= cp.seconds || cp.seconds===0;
     const card = document.createElement('div');
+    card.id = 'cp-card-'+cp.key;
     card.className = 'checkpoint-card' + (logged ? ' logged':'');
     card.innerHTML = `
       <div class="cp-time">${cp.label} <span class="cp-badge">${logged ? 'Logged' : (unlocked? 'Ready':'Locked')}</span></div>
       <div class="cp-fields">
         <div>
           <span class="cp-field-label">Red (mm)</span>
-          <input type="text" inputmode="numeric" value="${data.distRed||''}" placeholder="0" onchange="updateCheckpoint('${cp.key}','distRed',this.value)">
+          <input type="text" inputmode="numeric" value="${data.distRed||''}" placeholder="0">
         </div>
         <div>
           <span class="cp-field-label">Blue (mm)</span>
-          <input type="text" inputmode="numeric" value="${data.distBlue||''}" placeholder="0" onchange="updateCheckpoint('${cp.key}','distBlue',this.value)">
+          <input type="text" inputmode="numeric" value="${data.distBlue||''}" placeholder="0">
         </div>
       </div>
       <div class="cp-obs">
         <span class="cp-field-label">Observations</span>
-        <textarea placeholder="color, speed, anything unusual..." onchange="updateCheckpoint('${cp.key}','obs',this.value)">${data.obs||''}</textarea>
+        <textarea placeholder="color, speed, anything unusual...">${data.obs||''}</textarea>
       </div>
     `;
+    const [redInput, blueInput] = card.querySelectorAll('input');
+    const obsInput = card.querySelector('textarea');
+    redInput.addEventListener('input', ()=>updateCheckpoint(cp.key,'distRed',redInput.value));
+    blueInput.addEventListener('input', ()=>updateCheckpoint(cp.key,'distBlue',blueInput.value));
+    obsInput.addEventListener('input', ()=>updateCheckpoint(cp.key,'obs',obsInput.value));
     grid.appendChild(card);
   });
 }
@@ -1123,7 +1156,7 @@ function updateCheckpoint(key, field, value){
   if(!state.checkpoints[key]) state.checkpoints[key] = {};
   state.checkpoints[key][field] = value;
   save();
-  renderCheckpoints();
+  refreshCheckpointBadges();
   updateCompletion();
 }
 
